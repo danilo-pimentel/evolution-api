@@ -492,6 +492,7 @@ export class InstanceController {
       instance: {
         instanceName: instanceName,
         qrCode: this.waMonitor.waInstances[instanceName]?.connectionStatus?.state == 'connecting' ? this.waMonitor.waInstances[instanceName]?.qrCode.base64 : '',
+        state: this.waMonitor.waInstances[instanceName]?.connectionStatus?.state || 'not initialized',
         counter: this.waMonitor.waInstances[instanceName]?.qrCode.count,
       },
     };
