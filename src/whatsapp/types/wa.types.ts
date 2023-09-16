@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { AuthenticationState, WAConnectionState } from '@whiskeysockets/baileys';
+import { AuthenticationState, WAConnectionState } from '@danilopimentel/baileys';
 
 export enum Events {
   APPLICATION_STARTUP = 'application.startup',
@@ -68,6 +68,15 @@ export declare namespace wa {
     always_online?: boolean;
     read_messages?: boolean;
     read_status?: boolean;
+
+    local_address?: string;
+    manufacturer?: string;
+    locale_language?: string;
+    locale_country?: string;
+    platform?: string;
+    browser_name?: string;
+    client_name?: string;
+    os_version?: string;
   };
 
   export type LocalWebsocket = {

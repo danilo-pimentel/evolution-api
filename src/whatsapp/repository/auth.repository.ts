@@ -43,6 +43,29 @@ export class AuthRepository extends Repository {
     }
   }
 
+  public async findAll(): Promise<AuthRaw[]> {
+    try {
+      this.logger.verbose('finding auth');
+      if (this.dbSettings.ENABLED) {
+        this.logger.verbose('finding auth in db');
+        return await this.authModel.find();
+      }
+
+      this.logger.verbose('finding auth in store');
+
+      // return JSON.parse(
+      //     readFileSync(join(AUTH_DIR, this.auth.TYPE, instance + '.json'), {
+      //       encoding: 'utf-8',
+      //     }),
+      // ) as AuthRaw[];
+
+      return [];
+
+    } catch (error) {
+      return [];
+    }
+  }
+
   public async find(instance: string): Promise<AuthRaw> {
     try {
       this.logger.verbose('finding auth');

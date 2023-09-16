@@ -82,6 +82,24 @@ export class InstanceRouter extends RouterBroker {
 
         return res.status(HttpStatus.OK).json(response);
       })
+
+      .get(this.routerPath('qrCode'), ...guards, async (req, res) => {
+        logger.verbose('request received in qrCode');
+        logger.verbose('request body: ');
+        logger.verbose(req.body);
+
+        logger.verbose('request query: ');
+        logger.verbose(req.query);
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: instanceNameSchema,
+          ClassRef: InstanceDto,
+          execute: (instance) => instanceController.getLastQrCode(instance),
+        });
+
+        return res.status(HttpStatus.OK).json(response);
+      })
+
       .get(this.routerPath('fetchInstances', false), ...guards, async (req, res) => {
         logger.verbose('request received in fetchInstances');
         logger.verbose('request body: ');

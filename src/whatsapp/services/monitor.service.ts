@@ -21,6 +21,7 @@ import {
 } from '../models';
 import { RepositoryBroker } from '../repository/repository.manager';
 import { WAStartupService } from './whatsapp.service';
+import { repository } from '../whatsapp.module';
 
 export class WAMonitoringService {
   constructor(
@@ -246,8 +247,8 @@ export class WAMonitoringService {
       instance.instanceName = name;
       this.logger.verbose('instance loaded: ' + name);
 
-      await instance.connectToWhatsapp();
-      this.logger.verbose('connectToWhatsapp: ' + name);
+      //await instance.connectToWhatsapp();
+      //this.logger.verbose('connectToWhatsapp: ' + name);
 
       this.waInstances[name] = instance;
     };
@@ -268,14 +269,24 @@ export class WAMonitoringService {
 
       if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
         this.logger.verbose('database enabled');
-        await this.repository.dbServer.connect();
-        const collections: any[] = await this.dbInstance.collections();
-        if (collections.length > 0) {
-          this.logger.verbose('reading collections and setting instances');
-          collections.forEach(async (coll) => await set(coll.namespace.replace(/^[\w-]+\./, '')));
+
+        //await this.repository.dbServer.connect();
+        //const collections: any[] = await this.dbInstance.collections();
+        //if (collections.length > 0) {
+        //  this.logger.verbose('reading collections and setting instances');
+        //  collections.forEach(async (coll) => await set(coll.namespace.replace(/^[\w-]+\./, '')));
+        //} else {
+        //  this.logger.verbose('no collections found');
+        //}
+
+        const collection = await repository.auth.findAll();
+        if (collection.length > 0) {
+         this.logger.verbose('reading collections and setting instances');
+         collection.forEach(async (auth) => await set(auth._id));
         } else {
-          this.logger.verbose('no collections found');
+         this.logger.verbose('no collections found');
         }
+
         return;
       }
 

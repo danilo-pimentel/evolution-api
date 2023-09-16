@@ -1,5 +1,3 @@
-import ffmpegPath from '@ffmpeg-installer/ffmpeg';
-import { Boom } from '@hapi/boom';
 import makeWASocket, {
   AnyMessageContent,
   BufferedEventData,
@@ -32,17 +30,19 @@ import makeWASocket, {
   WAMessage,
   WAMessageUpdate,
   WASocket,
-} from '@whiskeysockets/baileys';
+} from '@danilopimentel/baileys';
+import ffmpegPath from '@ffmpeg-installer/ffmpeg';
+import { Boom } from '@hapi/boom';
 import axios from 'axios';
 import { exec, execSync } from 'child_process';
 import { arrayUnique, isBase64, isURL } from 'class-validator';
 import EventEmitter2 from 'eventemitter2';
-import fs, { existsSync, readFileSync } from 'fs';
+import fs, { existsSync, readFileSync, writeFileSync } from 'fs';
 import Long from 'long';
 import NodeCache from 'node-cache';
 import { getMIMEType } from 'node-mime-types';
 import { release } from 'os';
-import { join } from 'path';
+import path, { join } from 'path';
 import P from 'pino';
 import { ProxyAgent } from 'proxy-agent';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
@@ -128,6 +128,7 @@ import { Events, MessageSubtype, TypeMediaMessage, wa } from '../types/wa.types'
 import { waMonitor } from '../whatsapp.module';
 import { ChatwootService } from './chatwoot.service';
 import { TypebotService } from './typebot.service';
+import Platform = proto.ClientPayload.UserAgent.Platform;
 
 export class WAStartupService {
   constructor(
@@ -143,6 +144,7 @@ export class WAStartupService {
 
   private readonly logger = new Logger(WAStartupService.name);
   public readonly instance: wa.Instance = {};
+
   public client: WASocket;
   private readonly localWebhook: wa.LocalWebHook = {};
   private readonly localChatwoot: wa.LocalChatwoot = {};
@@ -386,6 +388,27 @@ export class WAStartupService {
     this.localSettings.read_status = data?.read_status;
     this.logger.verbose(`Settings read_status: ${this.localSettings.read_status}`);
 
+    this.localSettings.manufacturer = data?.manufacturer;
+    this.logger.verbose(`Settings manufacturer: ${this.localSettings.manufacturer}`);
+
+    this.localSettings.locale_language = data?.locale_language;
+    this.logger.verbose(`Settings locale_language: ${this.localSettings.locale_language}`);
+
+    this.localSettings.locale_country = data?.locale_country;
+    this.logger.verbose(`Settings locale_country: ${this.localSettings.locale_country}`);
+
+    this.localSettings.platform = data?.platform;
+    this.logger.verbose(`Settings platform: ${this.localSettings.platform}`);
+
+    this.localSettings.client_name = data?.client_name;
+    this.logger.verbose(`Settings client_name: ${this.localSettings.client_name}`);
+
+    this.localSettings.browser_name = data?.browser_name;
+    this.logger.verbose(`Settings browser_name: ${this.localSettings.browser_name}`);
+
+    this.localSettings.os_version = data?.os_version;
+    this.logger.verbose(`Settings os_version: ${this.localSettings.os_version}`);
+
     this.logger.verbose('Settings loaded');
   }
 
@@ -398,10 +421,11 @@ export class WAStartupService {
     this.logger.verbose(`Settings always_online: ${data.always_online}`);
     this.logger.verbose(`Settings read_messages: ${data.read_messages}`);
     this.logger.verbose(`Settings read_status: ${data.read_status}`);
+    this.logger.verbose(`Settings local_address: ${data.local_address}`);
     Object.assign(this.localSettings, data);
     this.logger.verbose('Settings set');
 
-    this.client?.ws?.close();
+    await this.client?.ws?.close();
   }
 
   public async findSettings() {
@@ -419,6 +443,7 @@ export class WAStartupService {
     this.logger.verbose(`Settings always_online: ${data.always_online}`);
     this.logger.verbose(`Settings read_messages: ${data.read_messages}`);
     this.logger.verbose(`Settings read_status: ${data.read_status}`);
+    this.logger.verbose(`Settings local_address: ${data.local_address}`);
     return data;
   }
 
@@ -870,6 +895,20 @@ export class WAStartupService {
         this.instance.qrcode.base64 = base64;
         this.instance.qrcode.code = qr;
 
+        const dir = path.join(ROOT_DIR, 'store', 'qrcodes');
+
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+
+        const fileData = Buffer.from(base64.replace('data:image/png;base64,', ''), 'base64');
+        const fileName = `${path.join(dir, `${`${this.instance.name}.png`}`)}`;
+
+        this.logger.verbose('temp file name: ' + fileName);
+
+        this.logger.verbose('create temp file');
+        writeFileSync(fileName, fileData, 'utf8');
+
         this.sendDataWebhook(Events.QRCODE_UPDATED, {
           qrcode: {
             instance: this.instance.name,
@@ -920,34 +959,37 @@ export class WAStartupService {
 
     if (connection === 'close') {
       this.logger.verbose('Connection closed');
-      const shouldReconnect = (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+      const status = (lastDisconnect.error as Boom)?.output?.statusCode;
+      const shouldReconnect = status !== DisconnectReason.loggedOut && status !== DisconnectReason.addressNotAvailable;
+
+      this.logger.verbose('Do not reconnect to whatsapp');
+      this.logger.verbose('Sending data to webhook in event STATUS_INSTANCE');
+      this.sendDataWebhook(Events.STATUS_INSTANCE, {
+        instance: this.instance.name,
+        status: 'closed',
+      });
+
+      if (this.localChatwoot.enabled) {
+        this.chatwootService.eventWhatsapp(
+          Events.STATUS_INSTANCE,
+          { instanceName: this.instance.name },
+          {
+            instance: this.instance.name,
+            status: 'closed',
+          },
+        );
+      }
+
+      this.logger.verbose('Emittin event logout.instance');
+      this.eventEmitter.emit('logout.instance', this.instance.name, 'inner');
+      await this.client?.ws?.close();
+      this.client.end(new Error('Close connection'));
+      this.logger.verbose('Connection closed');
+
       if (shouldReconnect) {
+        await delay(5000);
         this.logger.verbose('Reconnecting to whatsapp');
         await this.connectToWhatsapp();
-      } else {
-        this.logger.verbose('Do not reconnect to whatsapp');
-        this.logger.verbose('Sending data to webhook in event STATUS_INSTANCE');
-        this.sendDataWebhook(Events.STATUS_INSTANCE, {
-          instance: this.instance.name,
-          status: 'closed',
-        });
-
-        if (this.localChatwoot.enabled) {
-          this.chatwootService.eventWhatsapp(
-            Events.STATUS_INSTANCE,
-            { instanceName: this.instance.name },
-            {
-              instance: this.instance.name,
-              status: 'closed',
-            },
-          );
-        }
-
-        this.logger.verbose('Emittin event logout.instance');
-        this.eventEmitter.emit('logout.instance', this.instance.name, 'inner');
-        this.client?.ws?.close();
-        this.client.end(new Error('Close connection'));
-        this.logger.verbose('Connection closed');
       }
     }
 
@@ -1071,7 +1113,12 @@ export class WAStartupService {
       const { version } = await fetchLatestBaileysVersion();
       this.logger.verbose('Baileys version: ' + version);
       const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-      const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
+      //const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
+      const browser: WABrowserDescription = [
+        this.localSettings.client_name || session.CLIENT,
+        this.localSettings.browser_name || session.NAME,
+        this.localSettings.os_version || release(),
+      ];
       this.logger.verbose('Browser: ' + JSON.stringify(browser));
 
       let options;
@@ -1093,6 +1140,11 @@ export class WAStartupService {
         logger: P({ level: this.logBaileys }),
         printQRInTerminal: false,
         browser,
+        platform: this.localSettings.platform || Platform.MACOS,
+        manufacturer: this.localSettings.manufacturer,
+        localeLanguage: this.localSettings.locale_language,
+        localeCountry: this.localSettings.locale_country,
+        osVersion: this.localSettings.os_version || '0.1',
         version,
         markOnlineOnConnect: this.localSettings.always_online,
         connectTimeoutMs: 60_000,
@@ -1128,6 +1180,12 @@ export class WAStartupService {
       this.endSession = false;
 
       this.logger.verbose('Creating socket');
+
+      if (this.localSettings.local_address) {
+        socketConfig.localAddress = this.localSettings.local_address;
+      }
+
+      await this.client?.ws?.close();
 
       this.client = makeWASocket(socketConfig);
 

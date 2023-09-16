@@ -4,7 +4,7 @@ import {
   initAuthCreds,
   proto,
   SignalDataTypeMap,
-} from '@whiskeysockets/baileys';
+} from '@danilopimentel/baileys';
 
 import { Logger } from '../config/logger.config';
 import { RedisCache } from '../libs/redis.client';

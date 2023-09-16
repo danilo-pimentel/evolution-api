@@ -1,4 +1,4 @@
-import { delay } from '@whiskeysockets/baileys';
+import { delay } from '@danilopimentel/baileys';
 import { isURL } from 'class-validator';
 import EventEmitter2 from 'eventemitter2';
 
@@ -18,6 +18,9 @@ import { WebhookService } from '../services/webhook.service';
 import { WebsocketService } from '../services/websocket.service';
 import { WAStartupService } from '../services/whatsapp.service';
 import { wa } from '../types/wa.types';
+import path from "path";
+import {ROOT_DIR} from "../../config/path.config";
+import fs from "fs";
 
 export class InstanceController {
   constructor(
@@ -39,6 +42,7 @@ export class InstanceController {
 
   public async createInstance({
     instanceName,
+    ip,
     webhook,
     webhook_by_events,
     events,
@@ -261,6 +265,7 @@ export class InstanceController {
         always_online: always_online || false,
         read_messages: read_messages || false,
         read_status: read_status || false,
+        local_address: ip || undefined,
       };
 
       this.logger.verbose('settings: ' + JSON.stringify(settings));
@@ -271,10 +276,10 @@ export class InstanceController {
         let getQrcode: wa.QrCode;
 
         if (qrcode) {
-          this.logger.verbose('creating qrcode');
-          await instance.connectToWhatsapp(number);
-          await delay(5000);
-          getQrcode = instance.qrCode;
+          //this.logger.verbose('creating qrcode');
+          //await instance.connectToWhatsapp(number);
+          //await delay(5000);
+          //getQrcode = instance.qrCode;
         }
 
         const result = {
@@ -476,7 +481,18 @@ export class InstanceController {
     return {
       instance: {
         instanceName: instanceName,
-        state: this.waMonitor.waInstances[instanceName]?.connectionStatus?.state,
+        state: this.waMonitor.waInstances[instanceName]?.connectionStatus?.state || 'not initialized',
+      },
+    };
+  }
+
+  public async getLastQrCode({ instanceName }: InstanceDto) {
+    this.logger.verbose('requested getLastQrCode from ' + instanceName + ' instance');
+    return {
+      instance: {
+        instanceName: instanceName,
+        qrCode: this.waMonitor.waInstances[instanceName]?.connectionStatus?.state == 'connecting' ? this.waMonitor.waInstances[instanceName]?.qrCode.base64 : '',
+        counter: this.waMonitor.waInstances[instanceName]?.qrCode.count,
       },
     };
   }

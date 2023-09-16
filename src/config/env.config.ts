@@ -1,7 +1,8 @@
-import { isBooleanString } from 'class-validator';
-import { readFileSync } from 'fs';
-import { load } from 'js-yaml';
-import { join } from 'path';
+import {readFileSync} from 'fs';
+import {load} from 'js-yaml';
+import {join} from 'path';
+import {proto} from "@danilopimentel/baileys";
+import Platform = proto.ClientPayload.UserAgent.Platform;
 
 export type HttpServer = { TYPE: 'http' | 'https'; PORT: number; URL: string };
 
@@ -113,7 +114,10 @@ export type GlobalWebhook = {
 };
 export type SslConf = { PRIVKEY: string; FULLCHAIN: string };
 export type Webhook = { GLOBAL?: GlobalWebhook; EVENTS: EventsWebhook };
-export type ConfigSessionPhone = { CLIENT: string; NAME: string };
+export type ConfigSessionPhone = {
+  CLIENT: string;
+  NAME: string;
+};
 export type QrCode = { LIMIT: number; COLOR: string };
 export type Production = boolean;
 

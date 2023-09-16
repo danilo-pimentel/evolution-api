@@ -29,6 +29,7 @@ docker-compose.yaml
 !.vscode/launch.json
 !.vscode/extensions.json
 .nova/*
+.idea
 
 # Prisma
 /prisma/migrations

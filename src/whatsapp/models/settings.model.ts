@@ -10,6 +10,15 @@ export class SettingsRaw {
   always_online?: boolean;
   read_messages?: boolean;
   read_status?: boolean;
+
+  local_address?: string;
+  manufacturer?: string;
+  locale_language?: string;
+  locale_country?: string;
+  platform?: string;
+  browser_name?: string;
+  client_name?: string;
+  os_version?: string;
 }
 
 const settingsSchema = new Schema<SettingsRaw>({
@@ -20,6 +29,14 @@ const settingsSchema = new Schema<SettingsRaw>({
   always_online: { type: Boolean, required: true },
   read_messages: { type: Boolean, required: true },
   read_status: { type: Boolean, required: true },
+  local_address: { type: String },
+  manufacturer: { type: String },
+  locale_language: { type: String },
+  locale_country: { type: String },
+  platform: { type: String },
+  browser_name: { type: String },
+  client_name: { type: String },
+  os_version: { type: String },
 });
 
 export const SettingsModel = dbserver?.model(SettingsRaw.name, settingsSchema, 'settings');

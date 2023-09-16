@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from '@redis/client';
-import { BufferJSON } from '@whiskeysockets/baileys';
+import { BufferJSON } from '@danilopimentel/baileys';
 
 import { Redis } from '../config/env.config';
 import { Logger } from '../config/logger.config';

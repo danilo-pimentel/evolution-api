@@ -1,5 +1,6 @@
 export class InstanceDto {
   instanceName: string;
+  ip?: string;
   qrcode?: boolean;
   number?: string;
   token?: string;

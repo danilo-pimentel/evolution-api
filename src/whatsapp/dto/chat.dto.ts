@@ -1,4 +1,4 @@
-import { proto, WAPrivacyOnlineValue, WAPrivacyValue, WAReadReceiptsValue } from '@whiskeysockets/baileys';
+import { proto, WAPrivacyOnlineValue, WAPrivacyValue, WAReadReceiptsValue } from '@danilopimentel/baileys';
 
 export class OnWhatsAppDto {
   constructor(public readonly jid: string, public readonly exists: boolean, public readonly name?: string) {}
