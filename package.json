@@ -1,6 +1,6 @@
 {
-  "name": "evolution-api",
-  "version": "1.5.0",
+  "name": "wpp-api",
+  "version": "1.0.0",
   "description": "Rest api for communication with WhatsApp",
   "main": "./dist/src/main.js",
   "scripts": {

@@ -37,7 +37,7 @@ router
   .get('/', (req, res) => {
     res.status(HttpStatus.OK).json({
       status: HttpStatus.OK,
-      message: 'Welcome to the Evolution API, it is working!',
+      message: 'It is working!',
       version: packageJson.version,
     });
   })
