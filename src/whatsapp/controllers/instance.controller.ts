@@ -276,10 +276,10 @@ export class InstanceController {
         let getQrcode: wa.QrCode;
 
         if (qrcode) {
-          //this.logger.verbose('creating qrcode');
-          //await instance.connectToWhatsapp(number);
-          //await delay(5000);
-          //getQrcode = instance.qrCode;
+          this.logger.verbose('creating qrcode');
+          await instance.connectToWhatsapp(number);
+          await delay(5000);
+          getQrcode = instance.qrCode;
         }
 
         const result = {
