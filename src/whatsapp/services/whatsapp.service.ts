@@ -895,19 +895,19 @@ export class WAStartupService {
         this.instance.qrcode.base64 = base64;
         this.instance.qrcode.code = qr;
 
-        const dir = path.join(ROOT_DIR, 'store', 'qrcodes');
-
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-
-        const fileData = Buffer.from(base64.replace('data:image/png;base64,', ''), 'base64');
-        const fileName = `${path.join(dir, `${`${this.instance.name}.png`}`)}`;
-
-        this.logger.verbose('temp file name: ' + fileName);
-
-        this.logger.verbose('create temp file');
-        writeFileSync(fileName, fileData, 'utf8');
+        // const dir = path.join(ROOT_DIR, 'store', 'qrcodes');
+        //
+        // if (!fs.existsSync(dir)) {
+        //   fs.mkdirSync(dir, { recursive: true });
+        // }
+        //
+        // const fileData = Buffer.from(base64.replace('data:image/png;base64,', ''), 'base64');
+        // const fileName = `${path.join(dir, `${`${this.instance.name}.png`}`)}`;
+        //
+        // this.logger.verbose('temp file name: ' + fileName);
+        //
+        // this.logger.verbose('create temp file');
+        // writeFileSync(fileName, fileData, 'utf8');
 
         this.sendDataWebhook(Events.QRCODE_UPDATED, {
           qrcode: {
@@ -961,35 +961,33 @@ export class WAStartupService {
       this.logger.verbose('Connection closed');
       const status = (lastDisconnect.error as Boom)?.output?.statusCode;
       const shouldReconnect = status !== DisconnectReason.loggedOut && status !== DisconnectReason.addressNotAvailable;
-
-      this.logger.verbose('Do not reconnect to whatsapp');
-      this.logger.verbose('Sending data to webhook in event STATUS_INSTANCE');
-      this.sendDataWebhook(Events.STATUS_INSTANCE, {
-        instance: this.instance.name,
-        status: 'closed',
-      });
-
-      if (this.localChatwoot.enabled) {
-        this.chatwootService.eventWhatsapp(
-          Events.STATUS_INSTANCE,
-          { instanceName: this.instance.name },
-          {
-            instance: this.instance.name,
-            status: 'closed',
-          },
-        );
-      }
-
-      this.logger.verbose('Emittin event logout.instance');
-      this.eventEmitter.emit('logout.instance', this.instance.name, 'inner');
-      await this.client?.ws?.close();
-      this.client.end(new Error('Close connection'));
-      this.logger.verbose('Connection closed');
-
       if (shouldReconnect) {
-        await delay(5000);
         this.logger.verbose('Reconnecting to whatsapp');
         await this.connectToWhatsapp();
+      } else {
+        this.logger.verbose('Do not reconnect to whatsapp');
+        this.logger.verbose('Sending data to webhook in event STATUS_INSTANCE');
+        this.sendDataWebhook(Events.STATUS_INSTANCE, {
+          instance: this.instance.name,
+          status: 'closed',
+        });
+
+        if (this.localChatwoot.enabled) {
+          this.chatwootService.eventWhatsapp(
+              Events.STATUS_INSTANCE,
+              { instanceName: this.instance.name },
+              {
+                instance: this.instance.name,
+                status: 'closed',
+              },
+          );
+        }
+
+        this.logger.verbose('Emittin event logout.instance');
+        this.eventEmitter.emit('logout.instance', this.instance.name, 'inner');
+        this.client?.ws?.close();
+        this.client.end(new Error('Close connection'));
+        this.logger.verbose('Connection closed');
       }
     }
 
