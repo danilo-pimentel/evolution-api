@@ -289,6 +289,7 @@ export class InstanceController {
         // if (qrcode) {
         //   this.logger.verbose('creating qrcode');
         //   await instance.connectToWhatsapp(number);
+        //   connectToWhatsapp(number);
         //   await delay(5000);
         //   getQrcode = instance.qrCode;
         // }

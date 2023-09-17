@@ -244,8 +244,8 @@ export class WAMonitoringService {
     instance.instanceName = name;
     this.logger.verbose('Instance loaded: ' + name);
 
-    //await instance.connectToWhatsapp();
-    //this.logger.verbose('connectToWhatsapp: ' + name);
+    await instance.connectToWhatsapp();
+    this.logger.verbose('connectToWhatsapp: ' + name);
 
     this.waInstances[name] = instance;
   }
