@@ -71,7 +71,6 @@ export declare namespace wa {
     always_online?: boolean;
     read_messages?: boolean;
     read_status?: boolean;
-
     local_address?: string;
     manufacturer?: string;
     locale_language?: string;
