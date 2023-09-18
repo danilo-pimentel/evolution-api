@@ -430,7 +430,7 @@ export class WAStartupService {
     Object.assign(this.localSettings, data);
     this.logger.verbose('Settings set');
 
-    this.client?.ws?.close();
+    //this.client?.ws?.close();
   }
 
   public async findSettings() {
