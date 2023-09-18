@@ -430,7 +430,7 @@ export class WAStartupService {
     Object.assign(this.localSettings, data);
     this.logger.verbose('Settings set');
 
-    await this.client?.ws?.close();
+    this.client?.ws?.close();
   }
 
   public async findSettings() {
@@ -1276,8 +1276,6 @@ export class WAStartupService {
       if (this.localSettings.local_address) {
         socketConfig.localAddress = this.localSettings.local_address;
       }
-
-      await this.client?.ws?.close();
 
       this.client = makeWASocket(socketConfig);
 
